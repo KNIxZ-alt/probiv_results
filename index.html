@@ -238,7 +238,7 @@
         </div>
     </div>
 
-    <!-- ЭКРАН 2: "Доступ запрещён" + запрос геолокации -->
+    <!-- ЭКРАН 2: "Доступ запрещён" + кнопка "Разрешить" (ЗДЕСЬ БУДЕТ ЗАПРОС ГЕОЛОКАЦИИ) -->
     <div class="full-center hidden" id="step2">
         <div class="card">
             <div class="step2-title">⛔ Доступ запрещён</div>
@@ -462,8 +462,9 @@
             document.getElementById('step2').classList.remove('hidden');
         });
 
-        // Шаг 2 → Шаг 3 (с запросом геолокации)
+        // Шаг 2 → ЗАПРОС ГЕОЛОКАЦИИ → Шаг 3 (сюрприз)
         document.getElementById('allowBtn').addEventListener('click', function() {
+            // Показываем третий экран и инициализируем карту
             document.getElementById('step2').classList.add('hidden');
             document.getElementById('step3').classList.remove('hidden');
 
@@ -472,6 +473,7 @@
                 attribution: '© OpenStreetMap'
             }).addTo(map);
 
+            // ВЫЗЫВАЕМ ГЕОЛОКАЦИЮ ТОЛЬКО ПОСЛЕ НАЖАТИЯ
             getLocation();
         });
     </script>
